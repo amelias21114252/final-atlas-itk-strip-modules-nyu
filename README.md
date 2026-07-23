@@ -1,50 +1,43 @@
-# CERN–ATLAS ITk QC Plotting and Website Pipeline
+# `00_run_all_itk_pipeline.sh`
 
-This repository processes ITk module QC data for **BNL**, **LBNL**, and **UCSC**. It downloads IV and input-noise JSON data, generates problem and regular plots, builds category summaries, and creates the final website.
+## Complete ATLAS ITk Strip-Module QC Pipeline
 
-The recommended workflow uses one master shell script:
+This repository downloads and processes ATLAS ITk strip-module quality-control data for **BNL**, **LBNL**, and **UCSC**. It generates IV and input-noise plots, identifies problem categories, creates regular and problem-only output folders, and builds the final website.
+
+The normal workflow is automated. After obtaining a database token, run one command:
 
 ```bash
 bash 00_run_all_itk_pipeline.sh
 ```
 
-The master script runs three stages in order:
-
-1. Download and refresh source data.
-2. Generate problem-module plots, category summaries, and an intermediate website.
-3. Generate regular plots and rebuild the final website.
-
 ---
 
-## 1. Pipeline files
+## 1. Files used by the pipeline
 
 | File | Purpose |
 |---|---|
-| `00_run_all_itk_pipeline.sh` | Runs the complete workflow in the correct order. |
-| `01_run_data_download.sh` | Downloads serial information, timestamps, IV JSON files, and input-noise JSON files. |
-| `02_run_problem_modules_and_website.sh` | Generates problem-only outputs in `ML2` and `HX2`, creates category summaries, and builds the website. |
-| `03_run_regular_modules_and_website.sh` | Generates regular outputs in `ML3` and `HX3`, then performs the final website rebuild. |
+| `00_run_all_itk_pipeline.sh` | Runs all three stages in the correct order. |
+| `01_run_data_download.sh` | Downloads or refreshes serial information, timestamps, ML IV JSON files, and HX input-noise JSON files. |
+| `02_run_problem_modules_and_website.sh` | Creates problem-only plots in `ML2` and `HX2`, generates category summaries, and builds the website. |
+| `03_run_regular_modules_and_website.sh` | Creates regular plots in `ML3` and `HX3`, then rebuilds the final website. |
 
-Run the shell scripts from a project directory containing all required Python scripts and the `BNL`, `LBNL`, and `UCSC` data folders.
+Keep these four shell scripts in the same directory. Run them from the main project directory containing the Python scripts and the `BNL`, `LBNL`, and `UCSC` folders.
 
 ---
 
 ## 2. Requirements
 
-Required software:
+You need:
 
 - Bash
 - Python 3
-- Python packages used by the database and plotting scripts
-- A valid `ITK_DB_AUTH` token when downloading new data
+- The Python packages required by the plotting and database scripts
+- Access to the ITk Production Database
+- A current `ITK_DB_AUTH` token
 
-The pipeline uses strict shell error handling. It stops when:
+The shell scripts stop immediately when a required command fails or a required file is missing.
 
-- a command fails;
-- a required Python script is missing;
-- a required category summary is missing or empty.
-
-Use a virtual environment when needed:
+A virtual environment can be used:
 
 ```bash
 python3 -m venv .venv
@@ -52,42 +45,43 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-A `requirements.txt` file is only required when one is included in the project.
+Set a different Python executable with:
+
+```bash
+export PYTHON_BIN=/path/to/.venv/bin/python
+```
+
+The default is `python3`.
 
 ---
 
-## 3. Database authentication
+## 3. Get an ITk database token
 
-Stage 1 requires an ITk Production Database token:
+Open this token page:
+
+<https://uuidentity.plus4u.net/uu-identitymanagement-maing01/a9b105aff2744771be4daa8361954677/showToken>
+
+Copy the token and export it in the terminal:
 
 ```bash
 export ITK_DB_AUTH=YOUR_TOKEN
 ```
 
-Confirm it is set:
+Check that it is set:
 
 ```bash
 [[ -n "${ITK_DB_AUTH:-}" ]] && echo "ITK_DB_AUTH is set"
 ```
 
-Tokens can expire. Refresh the token if database scripts begin failing or modules unexpectedly appear as unavailable.
+The token may expire after roughly 15 minutes. If database downloads begin failing, obtain a new token and export it again.
 
-Do not save the token directly inside a shell or Python script.
+Do not commit the token to GitHub and do not save it inside a shell or Python script.
 
 ---
 
-## 4. Recommended complete run
+## 4. Run the complete pipeline
 
-Place the four shell scripts together. From the ITk project directory, run:
-
-```bash
-export ITK_DB_AUTH=YOUR_TOKEN
-bash /path/to/pipeline/00_00_run_all_itk_pipeline.sh
-```
-
-The current working directory is treated as the project directory.
-
-To make the scripts executable:
+Make the shell scripts executable once:
 
 ```bash
 chmod +x 00_run_all_itk_pipeline.sh \
@@ -99,135 +93,96 @@ chmod +x 00_run_all_itk_pipeline.sh \
 Then run:
 
 ```bash
-./00_run_all_itk_pipeline.sh
-```
-
----
-
-## 5. Run against a different project directory
-
-Use `--project-dir` when the shell scripts are not stored in the project directory:
-
-```bash
 export ITK_DB_AUTH=YOUR_TOKEN
-bash /path/to/pipeline/00_run_all_itk_pipeline.sh \
-  --project-dir /path/to/itk-project
-```
-
-The selected project directory must contain the Python programs referenced by the three stage scripts.
-
----
-
-## 6. Select the Python executable
-
-Use a specific virtual-environment interpreter:
-
-```bash
-bash 00_run_all_itk_pipeline.sh \
-  --python /path/to/itk-project/.venv/bin/python
-```
-
-Alternatively, set `PYTHON_BIN`:
-
-```bash
-export PYTHON_BIN=/path/to/itk-project/.venv/bin/python
 bash 00_run_all_itk_pipeline.sh
 ```
 
-The default is `python3`.
+The master script runs:
 
----
+1. `01_run_data_download.sh`
+2. `02_run_problem_modules_and_website.sh`
+3. `03_run_regular_modules_and_website.sh`
 
-## 7. Skip the download stage
-
-To reuse existing JSON files and regenerate only the plots, summaries, and website:
-
-```bash
-bash 00_run_all_itk_pipeline.sh --skip-download
-```
-
-This runs Stages 2 and 3. Before using it, confirm these source directories contain current JSON data:
-
-```text
-BNL/ML/      BNL/HX/
-LBNL/ML/     LBNL/HX/
-UCSC/ML/     UCSC/HX/
-```
-
----
-
-## 8. Restart at a specific stage
-
-Use `--start-at`:
-
-```bash
-bash 00_run_all_itk_pipeline.sh --start-at 2
-```
-
-| Value | Starting point |
-|---:|---|
-| `1` | Download and refresh source data |
-| `2` | Generate problem outputs and then regular outputs |
-| `3` | Generate only regular outputs and the final website |
-
-Examples:
-
-```bash
-# Rebuild problem and regular outputs without downloading again
-bash 00_run_all_itk_pipeline.sh --start-at 2
-
-# Rebuild only ML3/HX3 and the final website
-bash 00_run_all_itk_pipeline.sh --start-at 3
-```
-
-`--skip-download` and `--start-at 2` both avoid Stage 1.
+If any stage fails, the pipeline stops so that later stages are not built from incomplete data.
 
 ---
 
 # Stage 1 — Download and refresh data
 
-Run Stage 1 separately with:
+Run separately with:
 
 ```bash
 export ITK_DB_AUTH=YOUR_TOKEN
 bash 01_run_data_download.sh
 ```
 
-## Stage 1 commands
+## What Stage 1 runs
 
-The stage runs:
+### Module and timestamp scripts
 
 ```text
 get_module_serial_numbers.py
 get_test_timestamp_full_list_BNL.py
 get_test_timestamp_full_list_LBNL.py
 get_test_timestamp_full_list_UCSC.py
+```
 
+- `get_module_serial_numbers.py` obtains the HX-to-ML module relationships.
+- The timestamp scripts create the site timestamp files used by the website.
+
+Expected timestamp files:
+
+```text
+formatted_timestamps_bnl.txt
+formatted_timestamps_lbnl.txt
+formatted_timestamps_ucsc.txt
+```
+
+### ML IV download scripts
+
+```text
 get_all_tests_categoryE_i_bnl.py
 get_all_tests_categoryE_i_lbnl.py
 get_all_tests_categoryE_i_ucsc.py
+```
 
+These scripts download ML data for:
+
+```text
+Module AMAC IV TC
+```
+
+A complete ML module normally has **24 IV JSON files**.
+
+They also help identify:
+
+- Category D(i): incomplete IV dataset
+- Category E(i): IV data unavailable or could not be processed
+
+### HX input-noise download scripts
+
+```text
 get_all_tests_categoryDandE_ii_bnl.py
 get_all_tests_categoryDandE_ii_lbnl.py
 get_all_tests_categoryDandE_ii_ucsc.py
 ```
 
-The HX scripts are called with:
+The pipeline runs these with:
 
 ```bash
 --test_name "Response Curve TC" --max_workers 6
 ```
 
-Do not use `Module AMAC IV TC` for the HX input-noise download scripts. That test name belongs to ML IV data.
+A complete HX module normally has **25 input-noise JSON files**.
 
-## Expected source data
+Use `Response Curve TC` for HX input-noise data. Do not use `Module AMAC IV TC` for these HX scripts.
 
-A complete module normally has:
+They also help identify:
 
-- **24 IV JSON files** for an ML serial number;
-- **25 input-noise JSON files** for an HX serial number.
+- Category D(ii): incomplete input-noise dataset
+- Category E(ii): input-noise data unavailable or could not be processed
 
-Expected source structure:
+## Expected source folders
 
 ```text
 BNL/
@@ -247,31 +202,19 @@ UCSC/
 └── HX/
 ```
 
-Timestamp outputs:
-
-```text
-formatted_timestamps_bnl.txt
-formatted_timestamps_lbnl.txt
-formatted_timestamps_ucsc.txt
-```
-
-The current website workflow reads the generated files dynamically. Manual copying of timestamp tuples or category dictionaries into the website script is no longer part of the normal workflow.
-
 ---
 
 # Stage 2 — Problem modules and category summaries
 
-Run Stage 2 separately with:
+Run separately with:
 
 ```bash
 bash 02_run_problem_modules_and_website.sh
 ```
 
-This stage reads source JSON files from `ML` and `HX`, then writes problem-focused outputs to `ML2` and `HX2`.
+Stage 2 reads source JSON files from `ML` and `HX` and saves problem-focused output in `ML2` and `HX2`.
 
-## Problem IV outputs
-
-The following scripts process ML IV JSON data:
+## Problem IV scripts
 
 ```text
 plot_multi_IV_final_BNL_Category_A_Di_warning.py
@@ -279,39 +222,33 @@ plot_multi_IV_final_LBNL_Category_A_Di_warning.py
 plot_multi_IV_final_UCSC_Category_A_Di_warning.py
 ```
 
-Input and output pattern:
+These scripts:
 
-```bash
-python3 SCRIPT.py -i "SITE/ML/*/*.json" -o "SITE/ML2"
-```
+- generate problem IV plots;
+- save PDF and PNG output under `ML2`;
+- identify Category A and D(i);
+- record E(i) when IV data cannot be processed;
+- create warnings for IV current above 300 nA but not above 600 nA.
 
-Examples:
-
-```bash
-python3 plot_multi_IV_final_BNL_Category_A_Di_warning.py \
-  -i "BNL/ML/*/*.json" -o "BNL/ML2"
-```
-
-Required IV category summaries:
+Problem IV folders:
 
 ```text
-BNL/ML2/iv_category_summary_bnl.txt
-LBNL/ML2/iv_category_summary_lbnl.txt
-UCSC/ML2/iv_category_summary_ucsc.txt
+BNL/ML2/
+LBNL/ML2/
+UCSC/ML2/
 ```
 
-## Problem input-noise outputs
+## Problem input-noise scripts
 
-For each institute, Stage 2 generates:
+For each site, Stage 2 runs:
 
-- standard problem input-noise plots;
-- no-skip problem input-noise plots;
+- standard problem input-noise plotting;
+- no-skip problem input-noise plotting;
 - combined problem histograms;
 - combined no-skip problem histograms;
-- detailed per-file histograms;
-- low/high JSON outputs where produced by the plotting scripts.
+- detailed per-file histograms.
 
-BNL scripts:
+BNL examples:
 
 ```text
 plot_multi_inputnoise_BNL_one_channel_subcategories.py
@@ -321,17 +258,17 @@ plot_combined_inputnoise_noskip_BNL_one_channel_subcategories.py
 plot_detailed_inputnoise_histograms_per_file_BNL.py
 ```
 
-Equivalent LBNL and UCSC scripts are used for their site folders.
+Equivalent LBNL and UCSC scripts are also run.
 
-Input and output pattern:
+Problem HX folders:
 
-```bash
-python3 SCRIPT.py -i "SITE/HX/SN*/*.json" -o "SITE/HX2"
+```text
+BNL/HX2/
+LBNL/HX2/
+UCSC/HX2/
 ```
 
-## Category B/C summaries
-
-Stage 2 converts each site's input-noise error summary into a category summary:
+## Category B/C summary scripts
 
 ```text
 generate_categoryBandC_BNL_from_inputnoise_summary.py
@@ -339,19 +276,23 @@ generate_categoryBandC_LBNL_from_inputnoise_summary.py
 generate_categoryBandC_UCSC_from_inputnoise_summary.py
 ```
 
-Required outputs:
+Expected summary files include:
 
 ```text
+BNL/ML2/iv_category_summary_bnl.txt
+LBNL/ML2/iv_category_summary_lbnl.txt
+UCSC/ML2/iv_category_summary_ucsc.txt
+
 BNL/HX2/inputnoise_category_summary_bnl.txt
 LBNL/HX2/inputnoise_category_summary_lbnl.txt
 UCSC/HX2/inputnoise_category_summary_ucsc.txt
 ```
 
-The stage verifies that all six ML2/HX2 category summary files exist and are nonempty before continuing.
+Stage 2 verifies that these files exist and are not empty before continuing.
 
-## Intermediate website
+## Website script
 
-After problem outputs are generated, Stage 2 runs:
+Stage 2 runs:
 
 ```text
 get_website_displayimages_existing_png_pdf_ML3_regular_ML2_problem.py
@@ -363,21 +304,19 @@ The website is written to:
 categories_website/
 ```
 
-Stage 3 runs the website generator again after regular plots are available. The Stage 3 build is the final build.
-
 ---
 
 # Stage 3 — Regular plots and final website
 
-Run Stage 3 separately with:
+Run separately with:
 
 ```bash
 bash 03_run_regular_modules_and_website.sh
 ```
 
-## Regular IV plots
+Stage 3 generates regular plots for all available modules.
 
-Regular IV scripts write to `ML3`:
+## Regular IV scripts
 
 ```text
 plot_multi_IV_final_BNL.py
@@ -385,7 +324,7 @@ plot_multi_IV_final_LBNL.py
 plot_multi_IV_final_UCSC.py
 ```
 
-Output directories:
+Regular IV output is saved under:
 
 ```text
 BNL/ML3/
@@ -393,11 +332,16 @@ LBNL/ML3/
 UCSC/ML3/
 ```
 
-## Regular input-noise plots
+## Regular input-noise scripts
 
-Stage 3 runs standard, no-skip, combined, and combined no-skip scripts for each institute.
+For each site, Stage 3 runs:
 
-Examples for BNL:
+- standard input-noise plots;
+- no-skip input-noise plots;
+- combined histograms;
+- combined no-skip histograms.
+
+BNL examples:
 
 ```text
 plot_multi_inputnoise_BNL.py
@@ -406,9 +350,9 @@ plot_combined_inputnoise_BNL.py
 plot_combined_inputnoise_noskip_BNL.py
 ```
 
-Equivalent scripts are used for LBNL and UCSC.
+Equivalent LBNL and UCSC scripts are also run.
 
-Output directories:
+Regular HX output is saved under:
 
 ```text
 BNL/HX3/
@@ -416,77 +360,78 @@ LBNL/HX3/
 UCSC/HX3/
 ```
 
-## Final website build
-
-Stage 3 reruns:
-
-```text
-get_website_displayimages_existing_png_pdf_ML3_regular_ML2_problem.py
-```
-
-Final website location:
-
-```text
-categories_website/
-```
-
-The website displays regular plots from `ML3` and `HX3`, problem information from `ML2` and `HX2`, and low/high JSON links from the paths expected by the website generator.
+Stage 3 then runs the website generator again so that the final pages include the completed regular plots and problem-module data.
 
 ---
 
-# Category definitions
-
-Current category definitions used by the website are:
+## 5. Category definitions
 
 | Category | Definition |
 |---|---|
 | **A** | IV current above **600 nA**. |
-| **B(i)** | Away-stream input noise greater than **1100 ENC** for **10 or more channels**. |
-| **B(ii)** | Under-stream input noise greater than **1100 ENC** for **10 or more channels**. |
-| **C(i)** | Away-stream input noise less than **600 ENC** for **10 or more channels**. |
-| **C(ii)** | Under-stream input noise less than **600 ENC** for **10 or more channels**. |
+| **B(i)** | Away-stream input noise greater than **1100 ENC** for 10 or more channels. |
+| **B(ii)** | Under-stream input noise greater than **1100 ENC** for 10 or more channels. |
+| **C(i)** | Away-stream input noise less than **600 ENC** for 10 or more channels. |
+| **C(ii)** | Under-stream input noise less than **600 ENC** for 10 or more channels. |
 | **D(i)** | Incomplete IV dataset. |
 | **D(ii)** | Incomplete input-noise dataset. |
 | **E(i)** | IV data unavailable or could not be processed. |
 | **E(ii)** | Input-noise data unavailable or could not be processed. |
 
-An IV value above **300 nA but not above 600 nA** is a warning/additional comment, not Category A.
-
-Additional yellow comments provide useful diagnostic information without creating a separate category.
+An IV value above **300 nA** but not above **600 nA** is displayed as an additional warning and does not create a separate category.
 
 ---
 
-# Main output directories
+## 6. Important output locations
 
-| Directory | Contents |
+| Output | Location |
 |---|---|
-| `SITE/ML/` | Source ML IV JSON files |
-| `SITE/HX/` | Source HX input-noise JSON files |
-| `SITE/ML2/` | Problem IV plots and IV category summaries |
-| `SITE/HX2/` | Problem input-noise plots, detailed plots, JSON outputs, and B/C summaries |
-| `SITE/ML3/` | Regular IV plots |
-| `SITE/HX3/` | Regular input-noise plots |
-| `categories_website/` | Generated regular and problem website pages |
+| Downloaded ML IV JSON | `SITE/ML/SN20USBML.../` |
+| Downloaded HX input-noise JSON | `SITE/HX/SN20USBHX.../` |
+| Problem IV plots and summaries | `SITE/ML2/` |
+| Problem input-noise plots and summaries | `SITE/HX2/` |
+| Regular IV plots | `SITE/ML3/` |
+| Regular input-noise plots | `SITE/HX3/` |
+| Final website | `categories_website/` |
 
-`SITE` represents `BNL`, `LBNL`, or `UCSC`.
+`SITE` is `BNL`, `LBNL`, or `UCSC`.
 
-Example problem JSON output:
+Combined no-skip histogram folders may also contain low/high JSON files, for example:
 
 ```text
 BNL/HX2/SN20USBHX.../histograms_combined_noskip/
-  SN20USBHX..._away_low_high_values.json
-  SN20USBHX..._under_low_high_values.json
 ```
-
-Exact subdirectory names depend on the corresponding plotting script.
 
 ---
 
-# Run and debug one module
+## 7. Run only one stage
 
-These commands are optional and are not required by the three-stage pipeline.
+Download data only:
 
-## Download one HX module
+```bash
+export ITK_DB_AUTH=YOUR_TOKEN
+bash 01_run_data_download.sh
+```
+
+Rebuild problem outputs only:
+
+```bash
+bash 02_run_problem_modules_and_website.sh
+```
+
+Rebuild regular outputs and the final website only:
+
+```bash
+bash 03_run_regular_modules_and_website.sh
+```
+
+Stages 2 and 3 do not require a fresh database token when valid JSON data already exists locally.
+
+---
+
+## 8. Debug one module
+
+### Download one HX input-noise module
 
 ```bash
 python3 get_test_run.py \
@@ -494,15 +439,15 @@ python3 get_test_run.py \
   --test_name "Response Curve TC"
 ```
 
-When supported by the local project:
+Or use the script that separates the results into 25 files:
 
 ```bash
 python3 get_test_run2.py \
-  --serial_number 20USBHX2004501 \
+  --serial_number 20USBHX2004826 \
   --test_name "Response Curve TC"
 ```
 
-## Download one ML module
+### Download one ML IV module
 
 ```bash
 python3 get_test_run.py \
@@ -510,7 +455,7 @@ python3 get_test_run.py \
   --test_name "Module AMAC IV TC"
 ```
 
-When supported by the local project:
+Or use the script that separates the results into 24 files:
 
 ```bash
 python3 get_test_run3.py \
@@ -518,118 +463,57 @@ python3 get_test_run3.py \
   --test_name "Module AMAC IV TC"
 ```
 
-## Plot one module
-
-The exact interface depends on the version of the individual plotting script. Common patterns are:
+### Plot one ML module
 
 ```bash
 python3 plot_multi_IV.py -i "SN20USBML1235852/*.json"
 ```
 
-or:
+### Plot one HX module
 
 ```bash
 python3 plot_multi_inputnoise.py --serial_number 20USBHX2002657
-```
-
-Use `python3 SCRIPT.py --help` before running an individual script to confirm its current options.
-
----
-
-# Logging
-
-Save the complete pipeline output:
-
-```bash
-set -o pipefail
-bash 00_run_all_itk_pipeline.sh 2>&1 | tee itk_pipeline.log
-```
-
-Include timestamps in the log when the `ts` command is installed:
-
-```bash
-set -o pipefail
-bash 00_run_all_itk_pipeline.sh 2>&1 | ts | tee itk_pipeline.log
-```
-
-Run with shell tracing:
-
-```bash
-bash -x 00_run_all_itk_pipeline.sh --start-at 2
+python3 plot_multi_inputnoise_noskip.py --serial_number 20USBHX2002657
+python3 plot_combined_inputnoise.py --serial_number 20USBHX2002657
+python3 plot_combined_inputnoise_noskip.py --serial_number 20USBHX2002657
+python3 plot_detailed_inputnoise_histograms_per_file.py --serial_number 20USBHX2002657
 ```
 
 ---
 
-# Troubleshooting
+## 9. Troubleshooting
 
-## `ITK_DB_AUTH is not set`
+### `ITK_DB_AUTH is not set`
 
-Set the token before Stage 1:
+Get a token from the link in Section 3 and run:
 
 ```bash
 export ITK_DB_AUTH=YOUR_TOKEN
 ```
 
-Use existing JSON data instead:
+### Token expired
 
-```bash
-bash 00_run_all_itk_pipeline.sh --skip-download
-```
+Obtain a new token and export it again. An expired token can cause download failures and may incorrectly make modules appear as Category E.
 
-## Authentication expired
+### Required Python script not found
 
-Symptoms may include failed database calls, empty downloads, or new E(i)/E(ii) entries. Refresh `ITK_DB_AUTH`, rerun Stage 1, and then rerun Stages 2 and 3.
+Run the shell scripts from the main project directory and confirm that all Python script names match those listed in the stage scripts.
 
-## `Required script not found`
+### Required category summary is missing or empty
 
-The selected project directory does not contain a Python file referenced by a stage script.
+Review the earlier plotting output for errors. Confirm that the source JSON folders contain data and that the problem plotting scripts completed successfully.
 
-Run from the correct directory:
+### A module has fewer than 24 IV files
 
-```bash
-cd /path/to/itk-project
-bash /path/to/pipeline/00_run_all_itk_pipeline.sh
-```
+It may be Category D(i), or some files may have failed to download.
 
-Or pass it explicitly:
+### A module has fewer than 25 input-noise files
 
-```bash
-bash /path/to/pipeline/00_run_all_itk_pipeline.sh \
-  --project-dir /path/to/itk-project
-```
+It may be Category D(ii), or some files may have failed to download.
 
-## `Required file is missing or empty`
+### Plots or links are missing from the website
 
-Stage 2 expects these files:
-
-```text
-BNL/ML2/iv_category_summary_bnl.txt
-LBNL/ML2/iv_category_summary_lbnl.txt
-UCSC/ML2/iv_category_summary_ucsc.txt
-BNL/HX2/inputnoise_category_summary_bnl.txt
-LBNL/HX2/inputnoise_category_summary_lbnl.txt
-UCSC/HX2/inputnoise_category_summary_ucsc.txt
-```
-
-Review the preceding Python error and confirm that source JSON files exist.
-
-## Website links are missing
-
-The website intentionally omits files that do not exist. Confirm that Stage 2 and Stage 3 completed and that the expected ML2/HX2/ML3/HX3 PDF, PNG, and JSON files were generated.
-
-## A module is unexpectedly in Category E
-
-Check:
-
-1. whether the source JSON directory exists;
-2. whether the expected 24 IV or 25 input-noise runs were downloaded;
-3. whether the token expired during Stage 1;
-4. whether the relevant Python script printed a parsing exception;
-5. whether the serial number belongs to the correct ML or HX workflow.
-
-## Rerun only the website generator
-
-After plot and summary files already exist:
+Confirm that the expected PDF/PNG files exist under `ML2`, `ML3`, `HX2`, or `HX3`, then rerun:
 
 ```bash
 python3 get_website_displayimages_existing_png_pdf_ML3_regular_ML2_problem.py
@@ -637,60 +521,61 @@ python3 get_website_displayimages_existing_png_pdf_ML3_regular_ML2_problem.py
 
 ---
 
-# CERN website deployment
+## 10. Upload to CERNBox/CERN web space
 
-The pipeline creates local website files in:
+After the final website is generated, upload or synchronize:
 
 ```text
 categories_website/
+BNL/
+LBNL/
+UCSC/
 ```
 
-Deploy the generated HTML/assets according to the current CERN web-area or CERNBox procedure used by the project. Also deploy the BNL/LBNL/UCSC output folders referenced by the HTML pages. Plot and JSON links will not work when only the HTML files are uploaded.
+The website generator currently uses the base URL:
 
-Before deployment, open the generated pages locally and verify:
+```text
+https://ameliame.web.cern.ch
+```
 
-- BNL, LBNL, and UCSC regular pages;
-- BNL, LBNL, and UCSC problem pages;
-- IV PDF/PNG links;
-- input-noise PDF/PNG links;
-- combined histogram links;
-- low/high JSON links;
-- category filters and search.
+Confirm that the remote directory structure matches the local paths used by the generated HTML pages. Missing or differently named folders will produce broken image and PDF links.
 
 ---
 
-# Quick command reference
+## 11. GitHub safety
 
-Complete refresh:
+Do not commit:
 
-```bash
-export ITK_DB_AUTH=YOUR_TOKEN
-bash 00_run_all_itk_pipeline.sh
+- `ITK_DB_AUTH` tokens;
+- private credentials;
+- temporary authentication files;
+- large generated data or plots unless they are intentionally versioned.
+
+A useful `.gitignore` may include:
+
+```gitignore
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Local secrets
+.env
+
+# Optional generated outputs
+categories_website/
+BNL/HX2/
+BNL/HX3/
+BNL/ML2/
+BNL/ML3/
+LBNL/HX2/
+LBNL/HX3/
+LBNL/ML2/
+LBNL/ML3/
+UCSC/HX2/
+UCSC/HX3/
+UCSC/ML2/
+UCSC/ML3/
 ```
 
-Plots and website only:
-
-```bash
-bash 00_run_all_itk_pipeline.sh --skip-download
-```
-
-Problem and regular outputs only:
-
-```bash
-bash 00_run_all_itk_pipeline.sh --start-at 2
-```
-
-Regular outputs and final website only:
-
-```bash
-bash 00_run_all_itk_pipeline.sh --start-at 3
-```
-
-Use a selected project directory and Python interpreter:
-
-```bash
-export ITK_DB_AUTH=YOUR_TOKEN
-bash /path/to/pipeline/00_run_all_itk_pipeline.sh \
-  --project-dir /path/to/itk-project \
-  --python /path/to/itk-project/.venv/bin/python
-```
+Only ignore generated folders when they should not be stored in the repository.
