@@ -525,7 +525,7 @@ python3 get_website_displayimages_existing_png_pdf_ML3_regular_ML2_problem.py
 After the final website is generated, upload or synchronize:
 
 ```text
-categories_website/
+wwww/
 BNL/
 LBNL/
 UCSC/
@@ -537,44 +537,5 @@ The website generator currently uses the base URL:
 https://ameliame.web.cern.ch
 ```
 
-Confirm that the remote directory structure matches the local paths used by the generated HTML pages. Missing or differently named folders will produce broken image and PDF links.
 
 ---
-
-## 11. GitHub safety
-
-Do not commit:
-
-- `ITK_DB_AUTH` tokens;
-- private credentials;
-- temporary authentication files;
-- large generated data or plots unless they are intentionally versioned.
-
-A useful `.gitignore` may include:
-
-```gitignore
-.venv/
-__pycache__/
-*.pyc
-.DS_Store
-
-# Local secrets
-.env
-
-# Optional generated outputs
-categories_website/
-BNL/HX2/
-BNL/HX3/
-BNL/ML2/
-BNL/ML3/
-LBNL/HX2/
-LBNL/HX3/
-LBNL/ML2/
-LBNL/ML3/
-UCSC/HX2/
-UCSC/HX3/
-UCSC/ML2/
-UCSC/ML3/
-```
-
-Only ignore generated folders when they should not be stored in the repository.
