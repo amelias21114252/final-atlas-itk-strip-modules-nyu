@@ -1,6 +1,5 @@
-# `00_run_all_itk_pipeline.sh`
 
-## Complete ATLAS ITk Strip-Module QC Pipeline
+## Complete ATLAS ITk Strip-Module Pipline
 
 This repository downloads and processes ATLAS ITk strip-module quality-control data for **BNL**, **LBNL**, and **UCSC**. It generates IV and input-noise plots, identifies problem categories, creates regular and problem-only output folders, and builds the final website.
 
