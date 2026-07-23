@@ -5,7 +5,7 @@ This repository processes ITk module QC data for **BNL**, **LBNL**, and **UCSC**
 The recommended workflow uses one master shell script:
 
 ```bash
-bash run_all_itk_pipeline.sh
+bash 00_run_all_itk_pipeline.sh
 ```
 
 The master script runs three stages in order:
@@ -20,7 +20,7 @@ The master script runs three stages in order:
 
 | File | Purpose |
 |---|---|
-| `run_all_itk_pipeline.sh` | Runs the complete workflow in the correct order. |
+| `00_run_all_itk_pipeline.sh` | Runs the complete workflow in the correct order. |
 | `01_run_data_download.sh` | Downloads serial information, timestamps, IV JSON files, and input-noise JSON files. |
 | `02_run_problem_modules_and_website.sh` | Generates problem-only outputs in `ML2` and `HX2`, creates category summaries, and builds the website. |
 | `03_run_regular_modules_and_website.sh` | Generates regular outputs in `ML3` and `HX3`, then performs the final website rebuild. |
@@ -82,7 +82,7 @@ Place the four shell scripts together. From the ITk project directory, run:
 
 ```bash
 export ITK_DB_AUTH=YOUR_TOKEN
-bash /path/to/pipeline/run_all_itk_pipeline.sh
+bash /path/to/pipeline/00_00_run_all_itk_pipeline.sh
 ```
 
 The current working directory is treated as the project directory.
@@ -90,7 +90,7 @@ The current working directory is treated as the project directory.
 To make the scripts executable:
 
 ```bash
-chmod +x run_all_itk_pipeline.sh \
+chmod +x 00_run_all_itk_pipeline.sh \
   01_run_data_download.sh \
   02_run_problem_modules_and_website.sh \
   03_run_regular_modules_and_website.sh
@@ -99,7 +99,7 @@ chmod +x run_all_itk_pipeline.sh \
 Then run:
 
 ```bash
-./run_all_itk_pipeline.sh
+./00_run_all_itk_pipeline.sh
 ```
 
 ---
@@ -110,7 +110,7 @@ Use `--project-dir` when the shell scripts are not stored in the project directo
 
 ```bash
 export ITK_DB_AUTH=YOUR_TOKEN
-bash /path/to/pipeline/run_all_itk_pipeline.sh \
+bash /path/to/pipeline/00_run_all_itk_pipeline.sh \
   --project-dir /path/to/itk-project
 ```
 
@@ -123,7 +123,7 @@ The selected project directory must contain the Python programs referenced by th
 Use a specific virtual-environment interpreter:
 
 ```bash
-bash run_all_itk_pipeline.sh \
+bash 00_run_all_itk_pipeline.sh \
   --python /path/to/itk-project/.venv/bin/python
 ```
 
@@ -131,7 +131,7 @@ Alternatively, set `PYTHON_BIN`:
 
 ```bash
 export PYTHON_BIN=/path/to/itk-project/.venv/bin/python
-bash run_all_itk_pipeline.sh
+bash 00_run_all_itk_pipeline.sh
 ```
 
 The default is `python3`.
@@ -143,7 +143,7 @@ The default is `python3`.
 To reuse existing JSON files and regenerate only the plots, summaries, and website:
 
 ```bash
-bash run_all_itk_pipeline.sh --skip-download
+bash 00_run_all_itk_pipeline.sh --skip-download
 ```
 
 This runs Stages 2 and 3. Before using it, confirm these source directories contain current JSON data:
@@ -161,7 +161,7 @@ UCSC/ML/     UCSC/HX/
 Use `--start-at`:
 
 ```bash
-bash run_all_itk_pipeline.sh --start-at 2
+bash 00_run_all_itk_pipeline.sh --start-at 2
 ```
 
 | Value | Starting point |
@@ -174,10 +174,10 @@ Examples:
 
 ```bash
 # Rebuild problem and regular outputs without downloading again
-bash run_all_itk_pipeline.sh --start-at 2
+bash 00_run_all_itk_pipeline.sh --start-at 2
 
 # Rebuild only ML3/HX3 and the final website
-bash run_all_itk_pipeline.sh --start-at 3
+bash 00_run_all_itk_pipeline.sh --start-at 3
 ```
 
 `--skip-download` and `--start-at 2` both avoid Stage 1.
@@ -542,20 +542,20 @@ Save the complete pipeline output:
 
 ```bash
 set -o pipefail
-bash run_all_itk_pipeline.sh 2>&1 | tee itk_pipeline.log
+bash 00_run_all_itk_pipeline.sh 2>&1 | tee itk_pipeline.log
 ```
 
 Include timestamps in the log when the `ts` command is installed:
 
 ```bash
 set -o pipefail
-bash run_all_itk_pipeline.sh 2>&1 | ts | tee itk_pipeline.log
+bash 00_run_all_itk_pipeline.sh 2>&1 | ts | tee itk_pipeline.log
 ```
 
 Run with shell tracing:
 
 ```bash
-bash -x run_all_itk_pipeline.sh --start-at 2
+bash -x 00_run_all_itk_pipeline.sh --start-at 2
 ```
 
 ---
@@ -573,7 +573,7 @@ export ITK_DB_AUTH=YOUR_TOKEN
 Use existing JSON data instead:
 
 ```bash
-bash run_all_itk_pipeline.sh --skip-download
+bash 00_run_all_itk_pipeline.sh --skip-download
 ```
 
 ## Authentication expired
@@ -588,13 +588,13 @@ Run from the correct directory:
 
 ```bash
 cd /path/to/itk-project
-bash /path/to/pipeline/run_all_itk_pipeline.sh
+bash /path/to/pipeline/00_run_all_itk_pipeline.sh
 ```
 
 Or pass it explicitly:
 
 ```bash
-bash /path/to/pipeline/run_all_itk_pipeline.sh \
+bash /path/to/pipeline/00_run_all_itk_pipeline.sh \
   --project-dir /path/to/itk-project
 ```
 
@@ -665,32 +665,32 @@ Complete refresh:
 
 ```bash
 export ITK_DB_AUTH=YOUR_TOKEN
-bash run_all_itk_pipeline.sh
+bash 00_run_all_itk_pipeline.sh
 ```
 
 Plots and website only:
 
 ```bash
-bash run_all_itk_pipeline.sh --skip-download
+bash 00_run_all_itk_pipeline.sh --skip-download
 ```
 
 Problem and regular outputs only:
 
 ```bash
-bash run_all_itk_pipeline.sh --start-at 2
+bash 00_run_all_itk_pipeline.sh --start-at 2
 ```
 
 Regular outputs and final website only:
 
 ```bash
-bash run_all_itk_pipeline.sh --start-at 3
+bash 00_run_all_itk_pipeline.sh --start-at 3
 ```
 
 Use a selected project directory and Python interpreter:
 
 ```bash
 export ITK_DB_AUTH=YOUR_TOKEN
-bash /path/to/pipeline/run_all_itk_pipeline.sh \
+bash /path/to/pipeline/00_run_all_itk_pipeline.sh \
   --project-dir /path/to/itk-project \
   --python /path/to/itk-project/.venv/bin/python
 ```
